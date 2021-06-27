@@ -1,4 +1,6 @@
 import csv
+import os
+import datetime
 ### 商品クラス
 class Item:
     def __init__(self,item_code,item_name,price):
@@ -59,18 +61,6 @@ class Order:
         if self.item_order_list is not None or len(self.item_order_list) == 0:
             print(f'オーダーリストには{order_data.item_name}が{unit}個、{order_data.get_total_price(unit)}円入っています')# print('オーダーリストに{}:{}が{}個あります',format(o.item_code,o.item_name,unit))
             # return order_data.item_code,order_data.item_name
-    def pay(self):
-        """
-        扱う数は金額、お札、効果の枚数なので変数の型はint
-        """
-        pass
-    # def validate(該当する入力を引数とする):
-    #     if 入力されたコードなら:
-    #         return Falseを返す
-    #     return True 真を返す
-    
-    # アイテムのデータを取得する関数
-            
 
     # オーダーをリストへ登録する
     def register(self,order_data,unit,apple,orange,pear):
@@ -89,6 +79,7 @@ class Order:
             print(f'{orange.item_code}:{orange.item_name}{unit}個、追加されました')
             # return int(order_data),int(unit)
         # return order_data
+        
     def read_csv(self):
         """
         csv読み込み処理
@@ -96,6 +87,7 @@ class Order:
         with open('pos.csv',encoding='utf-8')as f:
                 for row in csv.reader(f):
                     print(','.join(row))
+                    
     def write_csv(self,total_price):
         """
         csv書き込み処理
@@ -104,13 +96,12 @@ class Order:
                 to_csv = [self.item_order_list,self.unit,total_price]
                 writer = csv.writer(f)
                 writer.writerow(to_csv)
+        return to_csv
     
     def get_data(self,item_code):
         """
         したいこと:オーダーリストを表示するためにマスタ情報を取得したい
-        
         アイテムが入っているリスト: item_master
-        ほしい情報:マスタアイテム情報
         値として返す変数: 合致したマスタのitemを取得する
         """
         for item in self.item_master:
@@ -137,6 +128,7 @@ class Order:
                 print('支払金額がたりません:',more_payment,'円')
                 print('も一度入力してください')
                 continue
+        return change_calc,payment,
 
 ### メイン処理
 def main():
@@ -154,7 +146,6 @@ def main():
     # print(type(apple))
     # print(item_order_list)
     #マスタ表示
-    print(type(apple))
     print('-' *10,'いらっしゃいませ','-'*10)
     order.view_item_master(item_master)
     print('-' *10,'masterから選んでください','-'*10)
@@ -181,9 +172,24 @@ def main():
     # マスタをCSVから書き込みする
     # print('total_price:',type(total_price))
     #コード、商品名、注文個数、合計金額
-    order.write_csv(total_price)
+    total_price_info = order.write_csv(total_price)
     
     # 預かり金額を入力して、お釣りを計算する
-    order.payment(total_price)
+    payment_info = order.payment(total_price)# 支払額、お釣り
+    # print(payment_info[0],payment_info[1])
+    # 日付時刻をファイル名としてレシートファイルを出力する
+    
+    now = datetime.datetime.now()
+    time_format = 'log_'+now.strftime('%Y%m%d%H%M')
+    text = 'レシートを発行します'
+    # write_item = 'アイテムコード:{}アイテム名:{}金額:¥{}円'.format(total_price_info[0][0].item_code,total_price_info[0][0].item_name,total_price_info[0][0].price)# アイテムコードを書き込みます
+    write_item = f'アイテムコード:{total_price_info[0][0].item_code}アイテム名:{total_price_info[0][0].item_name}金額:¥{total_price_info[0][0].price}円'# アイテムコードを書き込みます
+    write_payment = f'お釣り:¥{payment_info[0]}円 支払額:¥{payment_info[1]}円'
+    f = open(time_format,'w',encoding='utf-8')
+    writer = csv.writer(f,delimiter='\t')
+    writer.writerow([text])
+    writer.writerow(write_item)
+    writer.writerow([write_payment])
+    writer.writerow([])
 if __name__ == "__main__":
     main()
