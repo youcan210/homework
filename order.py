@@ -18,18 +18,6 @@ class Item:
     def get_item_data(self):
         return self.item_code,self.item_name,self.price
 
-    def has_code(self,order_in):
-        """
-        各注文オーダーの値が正しいかチェックするOKならTrue,NGならFalse
-        if オーダーリストとマスタが合致するか確認する
-        あればTrue
-        なければFalse
-        check_codeを返り値として返す
-        """
-        if order_in == self.item_code:
-            return True
-        else:
-            return False
     
 ### オーダークラス
 class Order:
@@ -38,7 +26,11 @@ class Order:
         self.item_master=item_master
         self.unit = []
         self.total_list = []
-    
+        self.sum_total_value = []
+        
+    def add_item_master(self):
+        self.item_master.append()
+
     def add_item_order(self,order_data,unit):
         self.item_order_list.append(order_data)
         self.unit.append(unit)
@@ -57,29 +49,30 @@ class Order:
                 print(f'オーダーリストには{item.item_name}が{unit}個入っています')
                 
     # オーダーをリストへ登録する
-    def register(self,order_data,unit):
+    def view_each_list(self,order_data,unit):
         print('-' * 20)
         #もしオーダーが入力されたら
-        if order_data == '001':
+        if self.has_code(order_data):
             # オーダーリストにオーダー要素を追加する
             print(f'{self.item_code}:{self.item_name}{unit}個、追加されました')
-            # return int(order_data),int(unit)
-        elif order_data == '002':
-            # オーダーリストにオーダー要素を追加する
-            print(f'{self.item_code}:{self.item_name}{unit}個、追加されました')
-            # return int(order_data),int(unit)
-        elif order_data == '003':
-            # オーダーリストにオーダー要素を追加する
-            print(f'{self.item_code}:{self.item_name}{unit}個、追加されました')
-            # return int(order_data),int(unit)
-        
 
+    def has_code(self,order_in):
+        for item in self.item_master:
+            if order_in == item.item_code:
+                return True
+            else:
+                return False
+            
     def read_csv(self):
         """
         csv読み込み処理
         """
-        with open('pos.csv',encoding='utf-8')as f:
+        with open('master.csv',encoding='utf-8')as f:
                 for row in csv.reader(f):
+                    # print(f'{row}')
+                    # print(f'{type(row)}')
+                    # print(f'1st data:{row[0]}')
+                    # print(f'1st data:{type(row[0])}')
                     print(','.join(row))
                     
     def write_csv(self,value_price):
@@ -92,10 +85,23 @@ class Order:
                 writer.writerow(to_csv)
         return to_csv
     
+    def master_csv(self):
+        """
+        csv書き込み処理
+        """
+        with open('master.csv','a',encoding='utf-8') as f:
+                to_csv = [self.item_master]
+                writer = csv.writer(f)
+                writer.writerow(to_csv)
+        # return to_csv
+    
     def get_data(self,item_code):
+        print('order_in:',item_code)
+        print('item_master:',self.item_master)
         for item in self.item_master:
             if item_code == item.item_code:
                 return item
+            return item
 
     def payment(self,value_price):
         while True:
@@ -136,59 +142,89 @@ class Order:
     def total_price(self,order_data):
         total_price = 0
         each_total_price = order_data.price * self.unit[-1]
+        print(type(each_total_price))
         total_price += each_total_price
         return total_price
 
     def view_total(self,sum_total_value):
         if sum_total_value:
             print('合計金額:',sum_total_value,'円になります')
+            
+    def add_master_csv(self,item1):
+        self.item_master.append(item1)
+        
+    # def num_digit(self):
+    #     for num in range(4):
+    #         string = str(num).zfill(3)
+    #         print(string)
 ### メイン処理
 def main():
-    # マスタ登録
     item_master=[]
-    item_master.append(Item("001","りんご",100))
-    item_master.append(Item("002","なし",120))
-    item_master.append(Item("003","みかん",150))
-    
     order=Order(item_master)
-    apple = Item("001","りんご",100)
-    pear = Item("002","なし",120)
-    orange = Item("003","みかん",150)
+    order.read_csv()
+    # マスタ登録
+    while True:
+        print('------マスタ登録を開始します-------')
+        code_in = input('アイテムコード番号を入力してください:')
+        item_in = input('商品名を入力してください:')
+        price_in = input('商品金額を入力してください:')
+        print()
+
+        item1 = Item(code_in,item_in,price_in)
+        # print('Ins_item:',item1)
+        order.add_master_csv(item1)
+        order.view_item_master()
+        print('-----')
+        
+        print('item_master_list:',item_master)
+        print()
+        done = input('終了しますか?終了ならyes(y)続行ならenterを押してください: ')
+        
+        if done == 'y':break
+        
+    order.master_csv()
+
+    # 商品マスタをcsvから登録する
+    # item_master.append(Item("001","りんご",100))
+    # item_master.append(Item("002","なし",120))
+    # item_master.append(Item("003","みかん",150))
+    
+    
     #マスタ表示
     print('-' *10,'いらっしゃいませ','-'*10)
     order.view_item_master()
     print('-' *10,'masterから選んでください','-'*10)
+    print('item_master:',item_master)
+    print('item_code:',item1.item_code,'item_name:',item1.item_name,'item_price:',item1.price)
     
     #追加したリンゴをオーダーリストに001として表示する
     while True:
-        selectmode = input('(y)で処理実行(n)で注文を終了します:')
-        print()
         
-        if selectmode == 'n':
-            break
-        elif selectmode == 'y':
-            order_in = input('注文を入力:')
-            unit = int(input('個数を入力:'))
-            # 入力されたコードから情報をもたせる
-            order_data = order.get_data(order_in) # オーダーとマスタの判定
-            # オーダー登録開始
-            order.register(order_data,unit)
-            order.add_item_order(order_data,unit)#オーダーリスト追加情報
-            # オーダーの合計計算
-            total = order.total_price(order_data)
-            order.add_total_list(total)
-            global sum_total_value
-            sum_total_value = sum(order.total_list)
-            order.view_total(sum_total_value)
-            continue
+        order_in = input('注文コードを入力:')
+        unit = int(input('個数を入力:'))
+        # 入力されたコードから情報をもたせる
+        order_data = order.get_data(order_in) # オーダーとマスタの判定
+        # オーダー登録開始
+        order.view_each_list(order_data,unit)
+        order.add_item_order(order_data,unit)#オーダーリスト追加情報
+        # オーダーの合計計算
+        print('order_data:',order_data.item_code,order_data.item_name)
+        total = order.total_price(order_data)
+        order.add_total_list(total)
+        order.sum_total_value = sum(order.total_list)
+        order.view_total(order.sum_total_value)
+        over = input('終了しますか?終了ならyes(y)続行ならenterを押してください: ')
+        
+        if over == 'y':break
+        
     # オーダー表示
     order.view_order_list()
     # 合計金額
-    order.view_total(sum_total_value)
+    order.view_total(order.sum_total_value)
     # # マスタをCSVから書き込みする
-    total_price_info = order.write_csv(sum_total_value)    
+    total_price_info = order.write_csv(order.sum_total_value)    
     # 預かり金額を入力して、お釣りを計算する
-    payment_info = order.payment(sum_total_value)# 支払額、お釣り    
+    payment_info = order.payment(order.sum_total_value)# 支払額、お釣り    
     # 日付時刻をファイル名としてレシートファイルを出力する
     order.recept(total_price_info,payment_info)
 if __name__ == "__main__":
